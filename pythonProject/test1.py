@@ -1,3 +1,6 @@
 print("git commit")
 print("git 수정")
-print("side 브랜치 생성 후 메인 브랜치 추가")
+
+print("side git 생성")
+print("side 브랜치 코드로 결정")
+

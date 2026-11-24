@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}출석 달력{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1 class="page-title">독서 출석부</h1>
+    <p class="muted">책 읽은 날을 눌러 체크하고, 몇 쪽 읽었는지 메모해 두세요</p>
+  </div>
+  <form method="post" action="{{ url_for('checkin_today') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <button class="btn primary" type="submit">오늘 출석하기</button>
+  </form>
+</section>
+
+<div class="year-nav">
+  <a href="{{ url_for('attendance_calendar', year=prev_m.year, month=prev_m.month) }}" aria-label="이전 달">‹</a>
+  <span>{{ year }}년 {{ month }}월</span>
+  <a href="{{ url_for('attendance_calendar', year=next_m.year, month=next_m.month) }}" aria-label="다음 달">›</a>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><span class="stat-num">{{ check_count }}<small>일</small></span><span class="stat-label">이번 달 출석</span></div>
+  <div class="stat"><span class="stat-num">{{ '%.0f' | format(rate) }}<small>%</small></span><span class="stat-label">책석률 ({{ check_count }}/{{ elapsed }}일)</span></div>
+</div>
+
+<div class="calendar">
+  {% for w in ['일','월','화','수','목','금','토'] %}<div class="dow">{{ w }}</div>{% endfor %}
+  {% for week in weeks %}{% for d in week %}
+    {% set iso = d.isoformat() %}
+    {% set c = checks.get(iso) %}
+    {% if d.month != month %}
+      <div class="day out"></div>
+    {% else %}
+      <button type="button" class="day {{ 'checked' if c }} {{ 'today' if d == today }} {{ 'future' if d > today }}"
+              data-day="{{ iso }}" data-pages="{{ c.pages if c else '' }}" data-memo="{{ c.memo if c else '' }}"
+              data-checked="{{ 1 if c else 0 }}">
+        <span class="num">{{ d.day }}</span>
+        {% if c %}<span class="stamp">📖</span>{% endif %}
+        {% if c and c.pages %}<span class="pages">{{ c.pages }}p</span>{% endif %}
+        {% for b in finished.get(iso, []) %}<span class="done-dot" title="완독: {{ b.title }}">✓ {{ b.title }}</span>{% endfor %}
+      </button>
+    {% endif %}
+  {% endfor %}{% endfor %}
+</div>
+
+<dialog id="day-dialog" class="card">
+  <form method="post" id="day-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h2 id="dlg-title">날짜</h2>
+    <label>읽은 쪽수 <input type="number" min="0" name="pages" id="dlg-pages" placeholder="0"></label>
+    <label>메모 <textarea name="memo" id="dlg-memo" rows="3" placeholder="오늘 읽은 책, 한 줄 기록..."></textarea></label>
+    <div class="actions">
+      <button class="btn danger" type="submit" name="action" value="delete" id="dlg-delete">출석 취소</button>
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="dlg-close">닫기</button>
+      <button class="btn primary" type="submit" name="action" value="save">출석 체크</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const dlg = document.getElementById('day-dialog');
+  const form = document.getElementById('day-form');
+  const base = "{{ url_for('attendance_save', day='DAY') }}";
+  document.querySelectorAll('.day[data-day]').forEach(el => {
+    el.addEventListener('click', () => {
+      const day = el.dataset.day;
+      const [y, m, d] = day.split('-').map(Number);
+      form.action = base.replace('DAY', day);
+      document.getElementById('dlg-title').textContent = `${y}년 ${m}월 ${d}일`;
+      document.getElementById('dlg-pages').value = el.dataset.pages;
+      document.getElementById('dlg-memo').value = el.dataset.memo;
+      document.getElementById('dlg-delete').hidden = el.dataset.checked !== '1';
+      dlg.showModal();
+    });
+  });
+  document.getElementById('dlg-close').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+{% endblock %}

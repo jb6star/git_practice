@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_cover.html" import cover %}
+{% block title %}{{ year }} 책장{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1 class="page-title">독서 통계</h1>
+    <p class="muted">"완독일"이 표시된 책을 기준으로 쌓여요</p>
+  </div>
+  <a class="btn primary" href="{{ url_for('book_new') }}">+ 책 추가</a>
+</section>
+
+<div class="segmented" role="tablist">
+  <a href="{{ url_for('shelf', year=year, view='books') }}" class="{{ 'on' if view != 'graph' }}">책</a>
+  <a href="{{ url_for('shelf', year=year, view='graph') }}" class="{{ 'on' if view == 'graph' }}">그래프</a>
+</div>
+
+<div class="year-nav">
+  <a href="{{ url_for('shelf', year=year-1, view=view) }}" aria-label="이전 해">‹</a>
+  <span>{{ year }}</span>
+  <a href="{{ url_for('shelf', year=year+1, view=view) }}" aria-label="다음 해">›</a>
+</div>
+
+<p class="headline">
+  {% if total %}{{ year }}년에 벌써 <strong>{{ total }}권</strong> 읽었어요
+  <span class="muted">· 월 평균 {{ '%.1f' | format(monthly_avg) }}권</span>
+  {% else %}아직 {{ year }}년에 완독한 책이 없어요. 첫 책을 쌓아 볼까요?{% endif %}
+</p>
+
+{% if view == 'graph' %}
+<div class="graph">
+  {% for m, books in months.items() %}
+  <div class="graph-col">
+    <span class="count">{{ books|length if books else '' }}</span>
+    <span class="bar" style="height: {{ (books|length / max_count * 100) if max_count else 0 }}%"></span>
+    <span class="month">{{ m }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="shelf-scroll">
+  <div class="shelf">
+    {% for m, books in months.items() %}
+    <div class="shelf-col">
+      <span class="count">{{ books|length if books else '' }}</span>
+      <div class="stack">
+        {% for b in books %}
+        <a href="{{ url_for('book_detail', book_id=b.id) }}" class="stack-item" title="{{ b.title }} · {{ b.finished_date }}">
+          {{ cover(b) }}
+          {% if b.review %}<span class="has-review" title="독후감 있음">✎</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      <span class="month">{{ m }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<p class="muted small center">책을 누르면 독후감을 쓸 수 있어요 · ✎ 표시는 독후감을 쓴 책</p>
+{% endif %}
+
+{% if reading %}
+<section class="reading">
+  <h2>읽는 중</h2>
+  <div class="reading-list">
+    {% for b in reading %}
+    <a class="reading-item" href="{{ url_for('book_detail', book_id=b.id) }}">
+      {{ cover(b, 'small') }}
+      <span><strong>{{ b.title }}</strong><br><span class="muted">{{ b.author }}</span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

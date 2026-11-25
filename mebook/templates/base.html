@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Mebook{% endblock %} · Mebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('shelf') }}"><span class="brand-mark">📚</span>Mebook</a>
+    {% if g.user %}
+    <nav class="nav">
+      <a href="{{ url_for('shelf') }}" class="{{ 'active' if request.endpoint == 'shelf' }}">책장</a>
+      <a href="{{ url_for('attendance_calendar') }}" class="{{ 'active' if request.endpoint == 'attendance_calendar' }}">출석</a>
+      <a href="{{ url_for('stats') }}" class="{{ 'active' if request.endpoint == 'stats' }}">통계</a>
+    </nav>
+    <form method="post" action="{{ url_for('logout') }}" class="logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <span class="who">{{ g.user.username }}</span>
+      <button class="link-btn" type="submit">로그아웃</button>
+    </form>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

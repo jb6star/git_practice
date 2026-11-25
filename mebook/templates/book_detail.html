@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_cover.html" import cover %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('shelf', year=book.finished_date[:4] if book.finished_date else None) }}">‹ 책장으로</a>
+
+<article class="card book-detail">
+  <div class="detail-cover">{{ cover(book, 'big') }}</div>
+  <div class="detail-info">
+    <h1>{{ book.title }}</h1>
+    <p class="muted">{{ book.author or '저자 미상' }}</p>
+    <p>
+      {% if book.finished_date %}<span class="pill">완독 {{ book.finished_date }}</span>
+      {% else %}<span class="pill reading">읽는 중</span>{% endif %}
+    </p>
+    <div class="detail-actions">
+      <a class="btn small" href="{{ url_for('book_edit', book_id=book.id) }}">정보 수정</a>
+      <form method="post" action="{{ url_for('book_delete', book_id=book.id) }}" onsubmit="return confirm('이 책을 삭제할까요? 독후감도 함께 지워져요.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn small danger" type="submit">삭제</button>
+      </form>
+    </div>
+  </div>
+</article>
+
+<form method="post" action="{{ url_for('book_review', book_id=book.id) }}" class="card review-card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <h2>독후감</h2>
+  <div class="stars" role="radiogroup" aria-label="별점">
+    {% for r in range(5, 0, -1) %}
+      <input type="radio" id="star{{ r }}" name="rating" value="{{ r }}" {{ 'checked' if book.rating == r }}>
+      <label for="star{{ r }}" title="{{ r }}점">★</label>
+    {% endfor %}
+    <input type="radio" id="star0" name="rating" value="0" {{ 'checked' if not book.rating }} hidden>
+  </div>
+  <textarea name="review" rows="12" placeholder="이 책을 읽고 무엇을 느꼈나요? 기억하고 싶은 문장을 적어 두세요.">{{ book.review }}</textarea>
+  <div class="actions">
+    <span class="muted small">마지막 수정 {{ book.updated_at.replace('T', ' ')[:16] }}</span>
+    <button class="btn primary" type="submit">독후감 저장</button>
+  </div>
+</form>
+{% endblock %}

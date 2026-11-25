@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ '책 수정' if book else '책 추가' }}{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ '책 정보 수정' if book else '읽은 책 추가' }}</h1>
+
+<section class="card search-card">
+  <label for="q">책 검색으로 표지 자동 채우기 <span class="muted small">(Google Books)</span></label>
+  <div class="row">
+    <input id="q" type="search" placeholder="제목 또는 저자로 검색">
+    <button class="btn" type="button" id="search-btn">검색</button>
+  </div>
+  <div id="results" class="results"></div>
+</section>
+
+<form method="post" class="card form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="cover-preview-wrap">
+    <span class="cover big" id="preview" style="--spine: {{ (book.id if book else 0) | spine_color }}">
+      <img id="preview-img" src="{{ form.cover_url or '' }}" alt="" {% if not form.cover_url %}hidden{% endif %} referrerpolicy="no-referrer">
+      <span class="cover-title" id="preview-title">{{ form.title or '제목' }}</span>
+    </span>
+  </div>
+  <div class="fields">
+    <label>제목 *
+      <input name="title" id="f-title" required maxlength="200" value="{{ form.title or '' }}">
+    </label>
+    <label>저자
+      <input name="author" id="f-author" maxlength="200" value="{{ form.author or '' }}">
+    </label>
+    <label>표지 이미지 주소 <span class="muted small">(선택)</span>
+      <input name="cover_url" id="f-cover" type="url" placeholder="https://..." value="{{ form.cover_url or '' }}">
+    </label>
+    {% set done = not book or form.finished_date %}
+    <fieldset class="status">
+      <legend>상태</legend>
+      <label class="inline"><input type="radio" name="status" value="done" {{ 'checked' if done }}> 다 읽었어요</label>
+      <label class="inline"><input type="radio" name="status" value="reading" {{ 'checked' if not done }}> 읽는 중</label>
+    </fieldset>
+    <label id="date-field">완독일
+      <input type="date" name="finished_date" value="{{ form.finished_date or today.isoformat() }}">
+    </label>
+    {% if not book %}
+    <label>별점
+      <select name="rating">
+        {% for r in range(0, 6) %}<option value="{{ r }}">{{ '★' * r or '없음' }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>독후감 <span class="muted small">(나중에 써도 돼요)</span>
+      <textarea name="review" rows="5" placeholder="인상 깊었던 문장, 느낀 점..."></textarea>
+    </label>
+    {% else %}
+    <input type="hidden" name="rating" value="{{ book.rating }}">
+    <input type="hidden" name="review" value="{{ book.review }}">
+    {% endif %}
+    <div class="actions">
+      <a class="btn" href="{{ url_for('book_detail', book_id=book.id) if book else url_for('shelf') }}">취소</a>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='book_form.js') }}"></script>
+{% endblock %}

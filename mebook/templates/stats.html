@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ year }} 통계{% endblock %}
+{% block content %}
+<h1 class="page-title">독서 통계</h1>
+
+<div class="year-nav">
+  <a href="{{ url_for('stats', year=year-1) }}" aria-label="이전 해">‹</a>
+  <span>{{ year }}</span>
+  <a href="{{ url_for('stats', year=year+1) }}" aria-label="다음 해">›</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><span class="stat-num">{{ total }}<small>권</small></span><span class="stat-label">{{ year }}년 완독</span></div>
+  <div class="stat"><span class="stat-num">{{ '%.1f' | format(monthly_avg) }}<small>권</small></span><span class="stat-label">월 평균 읽은 책</span></div>
+  <div class="stat accent"><span class="stat-num">{{ '%.0f' | format(year_rate) }}<small>%</small></span><span class="stat-label">올해 책석률 ({{ year_days }}/{{ elapsed_days }}일)</span></div>
+  {% if this_month %}
+  <div class="stat accent"><span class="stat-num">{{ '%.0f' | format(this_month.rate or 0) }}<small>%</small></span><span class="stat-label">이번 달 책석률 ({{ this_month.days }}/{{ this_month.elapsed }}일)</span></div>
+  {% endif %}
+  <div class="stat"><span class="stat-num">{{ current_streak }}<small>일</small></span><span class="stat-label">현재 연속 출석</span></div>
+  <div class="stat"><span class="stat-num">{{ longest_streak }}<small>일</small></span><span class="stat-label">최장 연속 출석</span></div>
+  <div class="stat"><span class="stat-num">{{ reviews }}<small>편</small></span><span class="stat-label">쓴 독후감</span></div>
+  <div class="stat"><span class="stat-num">{{ '%.1f' | format(avg_rating) if avg_rating else '-' }}</span><span class="stat-label">평균 별점</span></div>
+  <div class="stat"><span class="stat-num">{{ '{:,}'.format(pages_total) }}<small>쪽</small></span><span class="stat-label">기록한 쪽수</span></div>
+</div>
+
+<section class="card">
+  <h2>월별 기록</h2>
+  <div class="legend"><span class="sw books"></span>완독 권수 <span class="sw days"></span>책석률</div>
+  <div class="month-bars">
+    {% for m in monthly %}
+    <div class="mb-col">
+      <div class="mb-bars">
+        <span class="mb books" style="height: {{ (m.books / max_books * 100) if max_books else 0 }}%"><em>{{ m.books or '' }}</em></span>
+        <span class="mb days" style="height: {{ m.rate or 0 }}%"><em>{{ '%.0f' | format(m.rate) if m.rate else '' }}</em></span>
+      </div>
+      <span class="month">{{ m.month }}월</span>
+    </div>
+    {% endfor %}
+  </div>
+  <table class="table">
+    <thead><tr><th>월</th><th>완독</th><th>출석일</th><th>책석률</th></tr></thead>
+    <tbody>
+      {% for m in monthly %}{% if m.elapsed %}
+      <tr><td>{{ m.month }}월</td><td>{{ m.books }}권</td><td>{{ m.days }} / {{ m.elapsed }}일</td><td>{{ '%.0f' | format(m.rate) }}%</td></tr>
+      {% endif %}{% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">책석률 = 출석 체크한 날 ÷ 지난 날짜 수 · 월 평균 = 완독 권수 ÷ 지난 개월 수</p>
+</section>
+{% endblock %}

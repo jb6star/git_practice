@@ -1,0 +1,10 @@
+{# 책 표지: 이미지가 있으면 이미지, 없으면 색깔 표지에 제목 #}
+{% macro cover(book, cls='') -%}
+<span class="cover {{ cls }}" style="--spine: {{ book.id | spine_color }}">
+  {% if book.cover_url %}
+    <img src="{{ book.cover_url }}" alt="{{ book.title }}" loading="lazy" referrerpolicy="no-referrer"
+         onerror="this.remove()">
+  {% endif %}
+  <span class="cover-title">{{ book.title }}</span>
+</span>
+{%- endmacro %}
